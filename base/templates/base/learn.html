@@ -1,0 +1,90 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+<div>Learning courses</div>
+<div class="dropdown show">
+    <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
+        aria-haspopup="true" aria-expanded="false">
+        {{ learning_course }}
+    </a>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        {% for learning_course in learning_courses %}
+        <div id="{{learning_course.course.id}}" class="dropdown-item course">{{ learning_course }}</div>
+        {% endfor %}
+        <div id="add-course" class="dropdown-item course btn btn-outline-secondary">Add a new course</div>
+    </div>
+</div>
+
+
+<h2>Today</h2>
+<div>Words practiced {{words}}</div>
+<div>Phrases practiced {{phrases}}</div>
+<hr>
+<h5>{{learning_language}} lessons learning <span>{{lessons_learning.count}}</span></h5>
+<small id="show-all-lessons" class="btn btn-outline-secondary">Show all lessons in this course.</small>
+
+<hr>
+{% for lesson in lessons_learning %}
+<div>
+    {{lesson.lesson.name}}
+    <a class="btn btn-outline-secondary" href="{% url 'lesson-detail' lesson.course.id lesson.lesson.id %}">View
+        detail</a>
+    <a class="btn btn-outline-secondary" href="{% url 'lesson-learn' lesson.course.id lesson.lesson.id %}">Start</a>
+</div>
+
+<hr>
+{% empty %}
+{% endfor %}
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    const courseId = `{{learning_course.course.id}}`
+
+    var addCourse = document.getElementById('add-course')
+    addCourse.addEventListener('click', e => {
+        window.location = `/courses/`;
+    })
+
+    var showAllLessons = document.getElementById('show-all-lessons')
+    showAllLessons.addEventListener('click', e => {
+        window.location = `/courses/${courseId}/lessons/`;
+    })
+
+    const allCourses = document.querySelectorAll('.course');
+    allCourses.forEach(cou => cou.addEventListener('click', event => {
+        var courseEnrollUrl = `/courses/enroll/${cou.id}/`
+
+        fetch(courseEnrollUrl, {
+            method: 'POST', // or 'PUT'
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                window.location = `/learn/`;
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+
+    }));
+</script>
+
+{% endblock %}

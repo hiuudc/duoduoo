@@ -1,0 +1,22 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<h5>{{learning_language}} lessons learning <small>{{lessons.count}}</small></h5>
+
+</div>
+<div>Lesson</div>
+<hr>
+{% for lesson in lessons %}
+<div>Lesson: {{ lesson.lesson.name }}
+    <a href="{% url 'lesson-detail' lesson.course.id lesson.lesson.id %}">View detail</a>
+    <a href="{% url 'lesson-learn' lesson.course.id lesson.lesson.id %}">Start</a>
+</div>
+<hr>
+{% empty %}
+<div>There is no lesson in here.</div>
+{% endfor %}
+
+
+
+{% endblock %}

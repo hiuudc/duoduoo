@@ -1,0 +1,98 @@
+<div data-test="challenge challenge-translate">
+    <h1 data-test="challenge-header">
+        <span>Why this in _ </span>
+    </h1>
+    <div data-test="challenge-translate-phrase">
+        <button class="speak-button" style="cursor: pointer; "></button>
+        
+        <span class="hint-sentence">
+            <div>Word</div>
+            <div class="tooltip">Hover over me
+                <span class="tooltiptext">Tooltip text</span>
+            </div>
+        </span>
+
+        Use keyboard
+        <input type="text" id="answer" style='width: 320px; height: 120px;' placeholder="Type in ${speakingLanguage}" autofocus>
+        <textarea data-test="challenge-translate-input" lang="en" placeholder="type in _" name="" id="" cols="30"
+            rows="10"></textarea>
+        <div class="special-characters">
+            <button type="submit">↑</button>
+            <button type="submit">ä</button>
+            <button type="submit">ö</button>
+            <button type="submit">ü</button>
+            <button type="submit">ß</button>
+        </div>
+
+        Use word bank
+        <div class="input-lines">
+            <div>
+                <button data-test="challenge-tap-token" disabled>Word - None</button>
+            </div>
+        </div>
+
+        <div data-test="word-bank">
+            <div>
+                <button data-test="challenge-tap-token" disabled>Word - None</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div data-test="challenge challenge-listenTap" style="display: none;">
+    <h1 data-test="challenge-header">
+        <span>Tap what you hear</span>
+    </h1>
+
+    <button class="speak-button" style="cursor: pointer; "></button>
+    <button class="speak-slowly-button" style="cursor: pointer; "></button>
+
+    Use keyboard
+    <textarea data-test="challenge-translate-input" lang="en" placeholder="type in _" name="" id="" cols="30"
+        rows="10"></textarea>
+    <div class="special-characters">
+        <button type="submit">↑</button>
+        <button type="submit">ä</button>
+        <button type="submit">ö</button>
+        <button type="submit">ü</button>
+        <button type="submit">ß</button>
+    </div>
+
+    Use word bank
+    <div class="input-lines">
+        <div>
+            <button data-test="challenge-tap-token" disabled>Word - None</button>
+        </div>
+    </div>
+
+    <div data-test="word-bank">
+        <div>
+            <button data-test="challenge-tap-token" disabled>Word - None</button>
+        </div>
+    </div>
+</div>
+
+
+<div hidden>
+    <div class="footer-bar">
+        <button>Skip</button>
+        <button>X icon</button>
+        <button>Cant listen now</button>
+
+        <button>Review lesson</button>
+
+        <button>Use keyboard</button>
+        <button>Use word bank</button>
+
+        <div>Correct answer: # Excellent! Meaning:</div>
+
+        <div>answer</div>
+
+        <div>Awesome! # Great! # Correct! # Good job! # Nice job! # Nice! # Nicely done! # Amazing! # </div>
+
+
+
+        <button>Check</button>
+        <button>Continue</button>
+    </div>

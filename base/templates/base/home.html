@@ -1,0 +1,124 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<h1>Welcome to DuoDuo</h1>
+<div>
+    <div id="title"></div>
+    <select id="languages"></select>
+</div>
+
+<h5>Courses</h5>
+<div id="courses">
+    
+</div>
+
+
+<script>
+    languageURL = `{% url 'languages-json' %}`
+    var title = document.getElementById('title')
+    var languagesS = document.getElementById('languages')
+    var courses = document.getElementById('courses')
+
+    var selected_lang_id = `{{selected_lang_id}}`
+    function fetchGetLanguages() {
+        fetch(languageURL, {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(response => {
+                const langData = response.data
+                langData.map(l => {
+                    languagesS.append(new Option(l.language, l.id))
+                       
+                })
+                
+                if(selected_lang_id){
+                    for(let i = 0; i < languagesS.length; i++){
+                        if(languagesS.options[i].value === selected_lang_id)
+                            languagesS.selectedIndex = languagesS.options[i].index
+                    }
+                }
+                else{
+                    languagesS.selectedIndex = "0";
+                }
+                var selectedLangId = languagesS.value;
+                var speakerLang = languagesS.options[languagesS.selectedIndex].text;
+
+                fetchGetCourses(selectedLangId, speakerLang);
+
+                languagesS.addEventListener('change', e => {
+                    courses.innerHTML = ''
+                    var newselectedLangId = languagesS.value;
+                    var newspeakerLang = languagesS.options[languagesS.selectedIndex].text;
+                    fetchGetCourses(newselectedLangId, newspeakerLang);
+                    //window.location = ;
+                    window.history.replaceState({}, `Language Courses for ${newspeakerLang} Speakers`, `/courses/${languagesS.value}/`);
+                });
+                
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+    }
+
+    function fetchGetCourses(selectedLangId, speakerLang) {
+        fetch(`http://localhost:8000/courses-json/${selectedLangId}/`, {
+            method: 'GET',
+        })
+        .then(response => response.json())
+        .then(response => {
+            const coursesData = response.data
+            coursesData.map(course => {
+                if (course.enroll) {
+                    var cou = `
+                    <div id="${course.id}" class="course">
+                        ${course.name_course}
+                        <span>${course.learners} learners</span>
+                        <small>Learning</small>
+                    </div>
+                    <hr>
+                    `
+                }
+                else {
+                    var cou = `
+                    <div id="${course.id}" class="course">
+                        ${course.name_course}
+                        <span>${course.learners} learners</span>
+                    </div>
+                    <hr>
+                    `
+                }
+                courses.innerHTML += cou
+            });
+            if (speakerLang == "All languages") {
+                title.innerHTML = ` 
+                    <h1>Language Courses</h1>
+                `
+            }
+            else {
+                title.innerHTML = ` 
+                    <h1>Language Courses for ${speakerLang} Speakers</h1>
+                    <span>I speak </span>
+                `
+            }
+            const allCourses = document.querySelectorAll('.course');
+            allCourses.forEach(cou => cou.addEventListener('click', event => {
+                courseURL = `/courses/${cou.id}/enroll/`
+                window.location = courseURL;
+            }));
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        })
+    }
+    
+    fetchGetLanguages();
+
+
+</script>
+
+
+
+{% endblock %}
+

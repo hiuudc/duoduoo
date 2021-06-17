@@ -1,0 +1,47 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<form class="d-flex">
+    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+<br>
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>{{course}} phrases</h5>
+            <span>{{phrases.count}} Phrases</span>
+            <a href="{% url 'phrase-add' course.id %}">Add phrase</a>
+
+        </div>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        <div class="card card-body">
+            <table class="table">
+                <tr>
+                    <th>Phrase</th>
+                </tr>
+                {% for phrase in phrases %}
+                <tr>
+                    <td><a href="{% url 'phrase-detail' course.id phrase.id %}">{{ phrase.phrase }}</a></td>
+                    {% if phrase.user.is_superuser == False %}
+                    <td><a href="">Report</a></td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td>There is no phrase in this course.</td>
+                </tr>
+                {% endfor %}
+			</table>
+		</div>
+	</div>
+</div>
+
+{% endblock %}

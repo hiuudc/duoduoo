@@ -1,0 +1,41 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<div>
+    <h5>{{learning_language}} phrases learned <span>{{phrases.count}}</span></h5>
+
+</div>
+<form class="d-flex">
+    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+<br>
+<div>
+    <table class="table">
+        <tr>
+            <th>Phrases</th>
+            <th>Last practiced</th>
+            <th>Listening</th>
+            <th>Speaking</th>
+            <th>Reading</th>
+            <th>Writing</th>
+        </tr>
+        {% for phrase in phrases %}
+        <tr>
+            <td><a href="{% url 'phrase-detail' learning_course.course.id phrase.phrase.id %}">
+                    {{ phrase.phrase }}</a></td>
+            <td>{{ phrase.last_practiced|timesince }} ago</td>
+            <td>{{ phrase.listening }}</td>
+            <td>{{ phrase.speaking }}</td>
+            <td>{{ phrase.reading }}</td>
+            <td>{{ phrase.writing }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</div>
+
+
+
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base/main.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<a href="/courses/en/register/">
+    <span class="glyphicon glyphicon-menu-left"></span>
+    <span>All courses</span>
+</a>
+
+<h4 class="form-control form-control-lg">Course: {{course}}</h4>
+
+<h1>Register</h1>
+<div class="register">
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{ formRegister|crispy }}
+        <input id="register-btn" class="button" type="submit" value="Register">
+    </form>
+    <small>Already have an account? <a href="{% url 'login' %}">Login</a></small>
+</div>
+<script>
+
+</script>
+{% endblock %}

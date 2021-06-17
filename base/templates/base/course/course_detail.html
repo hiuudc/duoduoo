@@ -1,0 +1,86 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>{{course}} </h5>
+            <small>Words in this course <a href="{% url 'course-words' course.id %}"> View </a></small>
+            <hr>
+            <small>Phrases in this course <a href="{% url 'course-phrases' course.id %}"> View </a></small>
+            <hr>
+            <small>Examples in this course <a href="{% url 'course-examples' course.id %}"> View </a></small>
+            <hr>
+
+            <form class="d-flex">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+            <br>
+            <h5><a href="{% url 'lesson-add' course.id %}">Add lessons?</a></h5>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="card card-body">
+            <div>Lesson {{lessons.count}}</div>
+            <hr>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Lesson</th>
+                            <th>Tag</th>
+                            <th>Date Created</th>
+                            <th>Author</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lesson in lessons %}
+                        <tr>
+                            <td>
+                                <div>{{lesson.name}}</div>
+                            </td>
+                            <td>
+                                {% for tag in lesson.tag.all %}
+                                #{{tag}}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <div>{{lesson.date_created|timesince}}</div>
+                            </td>
+                            <td>
+                                <div><a href="{% url 'profile' lesson.user.username %}">{{lesson.user.username}}</a>
+                                </div>
+                            </td>
+                            <td><a href="{% url 'lesson-detail' course.id lesson.id %}">View detail</a></td>
+                            {% if request.user == lesson.user %}
+                            <td><a href="{% url 'lesson-edit' course.id lesson.id %}">Edit</a></td>
+                            <td><a href="{% url 'lesson-remove' course.id lesson.id %}">Remove</a></td>
+                            {% else %}
+                            <td></td>
+                            <td></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

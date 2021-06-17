@@ -1,0 +1,69 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<form class="d-flex">
+    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+<br>
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <div>Learning Course</div>
+            <hr>
+            {% if course %}
+                <h5>{{course}}</h5>
+                <small>Words in this course <a href="{% url 'course-words' course.id %}"> o </a></small>
+                <hr>
+                <small>Phrases in this course <a href="{% url 'course-phrases' course.id %}"> o </a></small>
+                <hr>
+                <small>Examples in this course <a href="{% url 'course-examples' course.id %}"> o </a></small>
+                <hr>
+                <h5>{{lessons.count}} lessons <a href="{% url 'lesson-add' course.id %}">Add more lessons?</a></h5>
+            {% else %}
+                <small>You arent learning any course now.</small>
+            {% endif %}
+        </div>
+        <div class="card card-body">
+            <div>Lesson</div>
+            <hr>
+            {% if lessons_learning %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {% for lesson in lessons_learning %}
+                <div>lesson name:
+                    <a href="{% url 'lesson-detail' course.id lesson.lesson.id %}">{{lesson.lesson.name}}</a>
+                    <span>|| Q</span>
+                    <a href="{% url 'lesson-learn' course.id lesson.lesson.id %}">Learn</a>
+                </div>
+                <!-- Tags in lesson -->
+                <small>Tag: {{lesson.lesson.tag.name}}</small>
+
+                <div>Created: {{lesson.lesson.date_created|timesince}} ago by <a
+                        href="{% url 'profile' lesson.user.username %}">{{lesson.user.username}}</a></div>
+
+
+                {% if request.user == lesson.user %}
+                <a href="{% url 'lesson-edit' course.id lesson.lesson.id %}">Edit</a>
+                <a href="{% url 'lesson-remove' course.id lesson.lesson.id %}">Remove</a>
+                {% endif %}
+                <hr>
+                {% empty %}
+                <small>There is no lesson in this course.</small>
+                <a href="{% url 'lesson-add' course.id %}">Add one?</a>
+                {% endfor %}
+            {% else %}
+                <small>You arent learning any lesson now.</small>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

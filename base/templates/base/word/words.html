@@ -1,0 +1,48 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+
+<form class="d-flex">
+    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+
+</form>
+<br>
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>{{course}} words</h5>
+            <span>{{words.count}} Words</span>
+            <a href="{% url 'word-add' course.id %}">Add word</a>
+        </div>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        <div class="card card-body">
+            <table class="table">
+                <tr>
+                    <th>Word</th>
+                </tr>
+                {% for word in words %}
+                <tr>
+                    <td><a href="{% url 'word-detail' course.id word.id %}">{{ word.word }}</a></td>
+                    <td><a href="">Report</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td>There is no word in this course.</td>
+                </tr>
+                {% endfor %}
+
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base/main.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block content %}
+
+<form method="POST">
+    {% csrf_token %}
+    <h4>{{course}}</h4>
+    <br>
+    <h3>{{action}} your translation of <span>{{phrase}}</span> down here.</h3>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    <hr>
+    <!-- |as_crispy_field  -->
+    {{form|crispy}}
+
+    <input class="button btn btn-outline-secondary" type="submit" value="{{action}}">
+    <a class="btn btn-outline-success" href="{% url 'phrase-detail' course.id phrase.id %}">Cancle</a>
+</form>
+
+
+{% endblock %}

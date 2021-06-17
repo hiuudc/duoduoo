@@ -1,0 +1,58 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'home' %}">DuoDuo</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    {% if request.user.is_authenticated %}
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">Stories</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'courses' %}">Courses</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'words-learned' %}">Words</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'phrases-learned' %}">Phrases</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'lessons-learning' %}">Lessons</a>
+        </li>
+        <!-- <li class="nav-item">
+            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+          </li> -->
+        <li class="nav-item">
+          <img style="height: 22px; width: 22px; margin-top: 10px;" class="nav-item rounded-circle"
+            src="{{ request.user.profile.imageURL }}">
+        </li>
+        <li class="nav-item dropdown">
+
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false"> {{ request.user }}
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="{% url 'profile' request.user %}">Profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'settings-account' %}">Settings account</a></li>
+            <li><a class="dropdown-item" href="{% url 'settings-profile' %}">Setting profile</a></li>
+            <li><a class="dropdown-item" href="{% url 'settings-password' %}">Setting password</a></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item" href="#">Something else here</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    {% else %}
+    <a class="navbar-right" href="{% url 'login' %}">Login</a>
+    <a class="navbar-right" href="{% url 'register' %}">Register</a>
+    {% endif %}
+
+  </div>
+</nav>

@@ -1,0 +1,19 @@
+{% extends 'base/main.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block content %}
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ course }}
+        <hr>
+        <small>Add your phrase down here</small>
+        <hr>
+        {{ form|crispy }}
+        <small>Hold down “Control”, or “Command” on a Mac, to select more than one tag.</small>
+        <hr>
+        <input class="button" type="submit" value="Add">
+    </form>
+    
+
+{% endblock %}

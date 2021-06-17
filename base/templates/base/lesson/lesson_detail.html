@@ -1,0 +1,1246 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+    .word-detail,
+    .word-remove {
+        display: none;
+    }
+
+    .word:hover .word-detail,
+    .word:hover .word-remove {
+        display: inline-block;
+    }
+
+    .missing-translation {
+        background-color: #ca7070;
+        color: white;
+    }
+
+    button {
+        background-color: rgba(255, 100, 100, 0.85);
+        padding: 2px 10px;
+        color: white;
+    }
+
+    .overlay {
+        overflow-y: scroll;
+        height: 100%;
+        width: 100%;
+        display: none;
+        position: fixed;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.9);
+    }
+
+    .overlay-content {
+        height: 100%;
+        background-color: whitesmoke;
+        top: 25%;
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+
+    }
+</style>
+
+<link rel="stylesheet" type="text/css" href="{% static '/css/lesson_detail.css' %}">
+
+<div id="search-overlay" class="overlay">
+    <a id="close-overley-btn" class="btn close-overley-btn">&times;</a>
+    <div class="overlay-content">
+        <button id="srch-word-btn" class="btn btn-outline-secondary">Search Word</button>
+        <!-- <button id="srch-word-byText-btn" class="btn btn-outline-secondary">Search Word by Text</button> -->
+        <button id="srch-phrase-btn" class="btn btn-outline-secondary">Search Phrase</button>
+        <button id="srch-example-btn" class="btn btn-outline-secondary">Search Example</button>
+
+        <!-- Word section -->
+        <div id="search-word-section" style="display: none;">
+            <div id="search-word-form">
+                <input id="search-word-input" class="form-control me-2" type="text"
+                    placeholder="Type one or more words here.">
+                <button id="search-word-btn" class="btn btn-outline-secondary">Search</button>
+            </div>
+
+            <div class="table-responsive" id="word-results" style="display: none;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Word</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="word-results-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Phrase section -->
+        <div id="search-phrase-section" style="display: none;">
+            <div id="search-phrase-form">
+                <input id="search-phrase-input" class="form-control me-2" type="text"
+                    placeholder="Search specific phrases or by word.">
+                <button id="search-phrase-btn" class="btn btn-outline-secondary">Search</button>
+            </div>
+
+            <div class="table-responsive" id="phrase-results" style="display: none;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Phrase</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="phrase-results-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Example section -->
+        <div id="search-example-section" style="display: none;">
+            <div id="search-example-form">
+                <input id="search-example-input" class="form-control me-2" type="text"
+                    placeholder="Search specific examples or by word.">
+                <button id="search-example-btn" class="btn btn-outline-secondary">Search</button>
+            </div>
+
+            <div class="table-responsive" id="example-results" style="display: none;">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Example</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="example-results-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>{{lesson.course}}</h5>
+            <div>Lesson: {{lesson.name}}</div>
+            {% if request.user == lesson.user %}
+            <div>
+                <a class="btn btn-info" href="{% url 'lesson-learn' lesson.course.id lesson.id %}">Learn</a>
+            </div>
+            {% else %}
+            <div>
+                <a class="btn btn-secondary" id="unauthor-learn-btn"
+                    href="{% url 'lesson-learn' lesson.course.id lesson.id %}">Learn</a>
+            </div>
+            {% endif %}
+            <div>
+                <div>
+                    Created: {{lesson.date_created|timesince}} ago by
+                    <a href="{% url 'profile' lesson.user %}">{{lesson.user}}</a>
+                </div>
+
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+            </div>
+            <div class="card card-body">
+                <!-- Topics in lesson -->
+                <div>
+                    {% for topic in lesson.topic.all %}
+                    <small>#{{topic}}</small>
+                    {% endfor %}
+                </div>
+
+                <!-- Words in lesson -->
+                <hr>
+                <div>
+                    Words
+                    {% if request.user == lesson.user %}
+                    <div class="btn btn-standard" id="add-new-word"><span class="glyphicon glyphicon-plus"></span>
+                        Add word
+                    </div>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="words-table">
+                        <thead>
+                            <tr>
+                                <th>Word</th>
+                                <th>IPA</th>
+                                <th>Part of speech</th>
+                                <th>Meaning in {{course.speaking_language}}</th>
+                                <th>Definition</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="words-tbody"></tbody>
+                    </table>
+                </div>
+                <br>
+                <!-- Phrases in lesson -->
+                <div>
+                    Phrases
+                    {% if request.user == lesson.user %}
+                    <div class="btn btn-standard" id="add-new-phrase">
+                        <span class="glyphicon glyphicon-plus"></span>
+                        Add phrase
+                    </div>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="phrases-table">
+                        <thead>
+                            <tr>
+                                <th>Phrase</th>
+                                <th>IPA</th>
+                                <th>Meaning in {{course.speaking_language}}</th>
+                                <th>Definition</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="phrases-tbody"></tbody>
+                    </table>
+                </div>
+                <br>
+                <div>
+                    Examples
+                    {% if request.user == lesson.user %}
+                    <div class="btn btn-standard" id="add-new-example"><span class="glyphicon glyphicon-plus"></span>
+                        Add example
+                    </div>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="examples-table">
+                        <thead>
+                            <tr>
+                                <th>Example</th>
+                                <th>{{course.speaking_language}} translation</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="examples-tbody"></tbody>
+                    </table>
+                </div>
+
+                {% if request.user == lesson.user %}
+                <a href="{% url 'lesson-remove' lesson.course.id lesson.id %}">Remove</a>
+                {% endif %}
+                <hr>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    var unlearnBtn = document.getElementById("unauthor-learn-btn")
+    if (unlearnBtn) {
+        unlearnBtn.addEventListener('click', () => {
+            fetch(unlearnBtn.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+
+                })
+                .catch((error) => {
+
+                });
+        })
+    }
+
+</script>
+
+<script>
+    const course_id = `{{lesson.course.id}}`
+    const lesson_id = `{{lesson.id}}`
+
+    var wordsTable = document.getElementById("words-table")
+    var wordsTbody = document.getElementById("words-tbody")
+
+    var phrasesTable = document.getElementById("phrases-table")
+    var phrasesTbody = document.getElementById("phrases-tbody")
+
+    var examplesTable = document.getElementById("examples-table")
+    var examplesTbody = document.getElementById("examples-tbody")
+
+    var wordsArray = JSON.parse(`{{words_list|safe}}`)
+    var phrasesArray = JSON.parse(`{{phrases_list|safe}}`)
+    var examplesArray = JSON.parse(`{{examples_list|safe}}`)
+
+    function GenerateWordsTBody(wordObj) {
+        if (wordObj.missing_translation) {
+            wordsTbody.innerHTML += `
+                        <tr id="word-tr-${wordObj.word_id}">
+                            <td>${wordObj.word}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="missing-translation">Missing translation</div></td>
+                            <td>
+                                <button class="btn btn-outline-secondary">
+                                    <a class="btn" href="/courses/${course_id}/words/${wordObj.word_id}/translations/add/">Add translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${wordObj.word_id}" class="remove-word-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+        }
+        else {
+            if (wordObj.edit) {
+                wordsTbody.innerHTML += `
+                        <tr id="word-tr-${wordObj.word_id}">
+                            <td>${wordObj.word}</td>
+                            <td>${wordObj.part_of_speech}</td>
+                            <td>${wordObj.ipa}</td>
+                            <td>${wordObj.meaning}</td>
+                            <td>${wordObj.definition}</td>
+                            <td>
+                                <button class="btn btn-outline-secondary">     
+                                    <a class="btn" href="/courses/${course_id}/words/${wordObj.word_id}/translations/${wordObj.translation_id}/edit/">Edit translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${wordObj.word_id}" class="remove-word-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+            }
+            else {
+                wordsTbody.innerHTML += `
+                        <tr id="word-tr-${wordObj.word_id}">
+                            <td>${wordObj.word}</td>
+                            <td>${wordObj.part_of_speech}</td>
+                            <td>${wordObj.ipa}</td>
+                            <td>${wordObj.meaning}</td>
+                            <td>${wordObj.definition}</td>
+                            <td>
+                                <button class="btn btn-outline-secondary">
+                                    <a class="btn" href="/courses/${course_id}/words/${wordObj.word_id}/translations/add/" title="Dont like this translation?">Add your own translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${wordObj.word_id}" class="remove-word-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+
+            }
+        }
+
+        const rmvWordBtns = document.querySelectorAll('.remove-word-btn');
+        rmvWordBtns.forEach(rmvWordBtn => rmvWordBtn.addEventListener('click', () => {
+            var wordTr = document.getElementById(`word-tr-${rmvWordBtn.id}`)
+            wordsTable.deleteRow(wordTr.rowIndex)
+            rmvWordURL = `/courses/${course_id}/lessons/${lesson_id}/remove_word/${rmvWordBtn.id}/`
+            fetch(rmvWordURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+            })
+                .then(response => response.json())
+                .then(data => { })
+                .catch((error) => { });
+        }))
+
+    }
+
+    for (w in wordsArray) {
+        if (wordsArray[w].remove) {
+            GenerateWordsTBody(wordsArray[w])
+        }
+        else {
+            if (wordsArray[w].missing_translation) {
+                wordsTbody.innerHTML += `
+                    <tr>
+                        <td>${wordsArray[w].word}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td><div class="missing-translation">Missing translation</div></td>
+                        <td>
+                            <button class="btn btn-outline-secondary">
+                                <a class="btn" href="/courses/${course_id}/words/${wordsArray[w].word_id}/translations/add/">Add translation</a>
+                            </button>
+                        </td>
+                    </tr>
+                    `
+
+            }
+            else {
+                wordsTbody.innerHTML += `
+                    <tr>
+                        <td>${wordsArray[w].word}</td>
+                        <td>${wordsArray[w].part_of_speech}</td>
+                        <td>${wordsArray[w].ipa}</td>
+                        <td>${wordsArray[w].meaning}</td>
+                        <td>${wordsArray[w].definition}</td>
+                    </tr>
+                    `
+            }
+        }
+
+    }
+
+    function GeneratePhrasesTBody(phraseObj) {
+        if (phraseObj.missing_translation) {
+            phrasesTbody.innerHTML += `
+                        <tr id="phrase-tr-${phraseObj.phrase_id}">
+                            <td>${phraseObj.phrase}</td>
+                            <td></td>
+                            <td></td>
+                            <td><div class="missing-translation">Missing translation</div></td>
+                            <td>
+                                <button class="btn btn-outline-secondary">
+                                    <a class="btn" href="/courses/${course_id}/phrases/${phraseObj.phrase_id}/translations/add/">Add translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${phraseObj.phrase_id}" class="remove-phrase-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+        }
+        else {
+            if (phraseObj.edit) {
+                phrasesTbody.innerHTML += `
+                        <tr id="phrase-tr-${phraseObj.phrase_id}">
+                            <td>${phraseObj.phrase}</td>
+                            <td>${phraseObj.ipa}</td>
+                            <td>${phraseObj.meaning}</td>
+                            <td>${phraseObj.definition}</td>
+                            <td>
+                                <button class="btn btn-outline-secondary">     
+                                    <a class="btn" href="/courses/${course_id}/phrases/${phraseObj.phrase_id}/translations/${phraseObj.translation_id}/edit/">Edit translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${phraseObj.phrase_id}" class="remove-phrase-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+            }
+            else {
+                phrasesTbody.innerHTML += `
+                        <tr id="phrase-tr-${phraseObj.phrase_id}">
+                            <td>${phraseObj.phrase}</td>
+                            <td>${phraseObj.ipa}</td>
+                            <td>${phraseObj.meaning}</td>
+                            <td>${phraseObj.definition}</td>
+                            <td>
+                                <button class="btn btn-outline-secondary">
+                                    <a class="btn" href="/courses/${course_id}/phrases/${phraseObj.phrase_id}/translations/add/" title="Dont like this translation?">Add your own translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${phraseObj.phrase_id}" class="remove-phrase-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+
+            }
+        }
+
+        const rmvPhraseBtns = document.querySelectorAll('.remove-phrase-btn');
+        rmvPhraseBtns.forEach(rmvPhraseBtn => rmvPhraseBtn.addEventListener('click', () => {
+            var phraseTr = document.getElementById(`phrase-tr-${rmvPhraseBtn.id}`)
+            phrasesTable.deleteRow(phraseTr.rowIndex)
+            rmvPhraseURL = `/courses/${course_id}/lessons/${lesson_id}/remove_phrase/${rmvPhraseBtn.id}/`
+            fetch(rmvPhraseURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                })
+                .catch((error) => {
+                    console.log(error)
+                });
+        }))
+
+    }
+
+    for (phr in phrasesArray) {
+        if (phrasesArray[phr].remove) {
+            GeneratePhrasesTBody(phrasesArray[phr])
+        }
+        else {
+            if (phrasesArray[phr].missing_translation) {
+                phrasesTbody.innerHTML += `
+                    <tr>
+                        <td>${phrasesArray[phr].phrase}</td>
+                        <td></td>
+                        <td></td>
+                        <td><div class="missing-translation">Missing translation</div></td>
+                        <td>
+                            <button class="btn btn-outline-secondary">
+                                <a class="btn" href="/courses/${course_id}/phrases/${phrasesArray[phr].phrase_id}/translations/add/">Add translation</a>
+                            </button>
+                        </td>
+                    </tr>
+                    `
+
+            }
+            else {
+                phrasesTbody.innerHTML += `
+                    <tr>
+                        <td>${phrasesArray[phr].phrase}</td>
+                        <td>${phrasesArray[phr].ipa}</td>
+                        <td>${phrasesArray[phr].meaning}</td>
+                        <td>${phrasesArray[phr].definition}</td>
+                    </tr>
+                    `
+            }
+        }
+
+    }
+
+    function GenerateExamplesTBody(exampleObj) {
+        if (exampleObj.missing_translation) {
+            examplesTbody.innerHTML += `
+                        <tr id="example-tr-${exampleObj.id}">
+                            <td>${exampleObj.example}</td>
+                            <td><div class="missing-translation">Missing translation</div></td>
+                            <td>
+                                <button class="btn btn-outline-secondary">
+                                    <a class="btn" href="/courses/${course_id}/examples/${exampleObj.id}/example_edit/">Add translation</a>
+                                </button>
+                            </td>
+                            <td><button id="${exampleObj.id}" class="remove-example-btn btn btn-outline-danger">Remove</button></td>
+                        </tr>
+                        `
+        }
+        else {
+            examplesTbody.innerHTML += `
+                                            <tr id="example-tr-${exampleObj.id}">
+                                                <td>${exampleObj.example}</td>
+                                                <td>${exampleObj.translation}</td>
+                                                <td>
+                                                    <button class="btn btn-outline-secondary">     
+                                                        <a class="btn" href="/courses/${course_id}/examples/${exampleObj.id}/example_edit/">Edit translation</a>
+                                                    </button>
+                                                </td>
+                                                <td><button id="${exampleObj.id}" class="remove-example-btn btn btn-outline-danger">Remove</button></td>
+                                            </tr>
+                                            `
+        }
+
+        const rmvExampleBtns = document.querySelectorAll('.remove-example-btn');
+        rmvExampleBtns.forEach(rmvExampleBtn => rmvExampleBtn.addEventListener('click', () => {
+            var exampleTr = document.getElementById(`example-tr-${rmvExampleBtn.id}`)
+            examplesTable.deleteRow(exampleTr.rowIndex)
+            rmvExampleURL = `/courses/${course_id}/lessons/${lesson_id}/remove_example/${rmvExampleBtn.id}/`
+            fetch(rmvExampleURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                })
+                .catch((error) => {
+                    console.log(error)
+                });
+        }))
+
+    }
+
+    for (exp in examplesArray) {
+        if (examplesArray[exp].remove) {
+            GenerateExamplesTBody(examplesArray[exp])
+        }
+        else {
+            if (examplesArray[exp].missing_translation) {
+                examplesTbody.innerHTML += `
+                    <tr>
+                        <td>${examplesArray[exp].example}</td>
+                        <td><div class="missing-translation">Missing translation</div></td>
+                    </tr>
+                    `
+            }
+            else {
+                examplesTbody.innerHTML += `
+                    <tr>
+                        <td>${examplesArray[exp].example}</td>
+                        <td>${examplesArray[exp].translation}</td>
+                    </tr>
+                    `
+            }
+        }
+    }
+
+
+    var addNewWord = document.getElementById("add-new-word")
+    var searchWord = document.getElementById("search-word-form")
+    var wordResults = document.getElementById("word-results")
+
+    var addNewPhrase = document.getElementById("add-new-phrase")
+    var searchPhrase = document.getElementById("search-phrase")
+    var phraseResults = document.getElementById("phrase-results")
+
+    var addNewExample = document.getElementById("add-new-example")
+    var searchExample = document.getElementById("search-example")
+    var exampleResults = document.getElementById("example-results")
+
+    var wordQ = document.getElementById("search-word-input")
+    var searchWordBtn = document.getElementById("search-word-btn")
+
+    var phraseQ = document.getElementById("search-phrase-input")
+    var searchPhraseBtn = document.getElementById("search-phrase-btn")
+
+    var exampleQ = document.getElementById("search-example-input")
+    var searchExampleBtn = document.getElementById("search-example-btn")
+
+    var wordResultsTbody = document.getElementById("word-results-tbody")
+    var phraseResultsTbody = document.getElementById("phrase-results-tbody")
+    var exampleResultsTbody = document.getElementById("example-results-tbody")
+
+    // wordQ.addEventListener('keyup', ()=>{
+    //    setTimeout(()=>{}, 3000)})
+
+    // Search handler
+
+    var srchWordBtn = document.getElementById("srch-word-btn")
+    //var srchWordbyTextBtn = document.getElementById("srch-word-byText-btn")
+    var srchPhraseBtn = document.getElementById("srch-phrase-btn")
+    var srchExampleBtn = document.getElementById("srch-example-btn")
+
+    var searchWordSection = document.getElementById("search-word-section")
+    //var searchWordbyTextSection = document.getElementById("search-word-byText-section")
+    var searchPhraseSection = document.getElementById("search-phrase-section")
+    var searchExampleSection = document.getElementById("search-example-section")
+
+    var searchOverlay = document.getElementById("search-overlay")
+    var closeOverlayBtn = document.getElementById("close-overley-btn")
+
+    closeOverlayBtn.addEventListener('click', () => {
+        searchOverlay.style.display = "none";
+    })
+
+    function isLetter(str) {
+        var char, i, len;
+        for (i = 0, len = str.length; i < len; i++) {
+            char = str[i];
+            if (char.toLowerCase() != char.toUpperCase()) {
+                continue;
+            }
+            else {
+                return false;
+                break;
+            }
+        }
+        return true;
+    }
+
+    function isAlphaNumeric(str) {
+        var code, i, len;
+
+        for (i = 0, len = str.length; i < len; i++) {
+            code = str.charCodeAt(i);
+            if (!(code > 47 && code < 58) && // numeric (0-9)
+                !(code > 64 && code < 91) && // upper alpha (A-Z)
+                !(code > 96 && code < 123)) { // lower alpha (a-z)
+                return false;
+            }
+        }
+        return true;
+    };
+
+    srchWordBtn.addEventListener('click', () => {
+        if (searchWordSection.style.display == 'none') {
+            searchWordSection.style.display = "block";
+            wordQ.focus()
+            searchPhraseSection.style.display = "none";
+            searchExampleSection.style.display = "none";
+        }
+    })
+
+    srchPhraseBtn.addEventListener('click', () => {
+        if (searchPhraseSection.style.display == 'none') {
+            searchPhraseSection.style.display = "block";
+            phraseQ.focus()
+            searchWordSection.style.display = "none";
+            searchExampleSection.style.display = "none";
+        }
+    })
+
+    srchExampleBtn.addEventListener('click', () => {
+        if (searchExampleSection.style.display == 'none') {
+            searchExampleSection.style.display = "block";
+            exampleQ.focus()
+            searchWordSection.style.display = "none";
+            searchPhraseSection.style.display = "none";
+        }
+    })
+
+    addNewWord.addEventListener('click', e => {
+        searchOverlay.style.display = "block";
+        if (searchWordSection.style.display == 'none') {
+            searchWordSection.style.display = "block";
+            wordQ.focus()
+            searchPhraseSection.style.display = "none";
+            searchExampleSection.style.display = "none";
+        }
+    })
+
+    addNewPhrase.addEventListener('click', e => {
+        searchOverlay.style.display = "block";
+        if (searchPhraseSection.style.display == 'none') {
+            searchPhraseSection.style.display = "block";
+            phraseQ.focus()
+            searchWordSection.style.display = "none";
+            searchExampleSection.style.display = "none";
+        }
+    })
+
+    addNewExample.addEventListener('click', e => {
+        searchOverlay.style.display = "block";
+        if (searchExampleSection.style.display == 'none') {
+            searchExampleSection.style.display = "block";
+            exampleQ.focus()
+            searchWordSection.style.display = "none";
+            searchPhraseSection.style.display = "none";
+        }
+    })
+
+    searchWordBtn.addEventListener('click', () => {
+        //  RegEx   :      /\s/g.test(s)
+        if (wordQ.value.indexOf(' ') >= 0 || isLetter(wordQ.value) === false) {
+            alert("Your word can not contain special characters or numbers.")
+            wordQ.focus()
+        }
+        else {
+            wordResults.style.display = 'block'
+            wordQ.focus()
+            if (wordQ.value.length > 0) {
+                searchWordURL = `/courses/${course_id}/lessons/${lesson_id}/search_word/${wordQ.value}/`
+                fetch(searchWordURL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                })
+                    .then(response => response.json())
+                    .then(response => {
+                        wordResultsTbody.innerHTML = ''
+                        const wordResults = response.data
+                        const specificWord = response.specific_word
+                        var unknowWord = wordQ.value
+                        if (!specificWord) {
+                            wordResultsTbody.innerHTML = `
+                                                            <tr>
+                                                                <td>This course doesn't have any word like '${unknowWord}'. 
+                                                                    Still add to my lesson and i'll give '${unknowWord}' a translation.</td>
+                                                                <td><button class="add-word-tran-btn btn btn-outline-secondary">Add translation</button></td>
+                                                            </tr>
+                                                            <tr>
+                                                                 <td id="unknow-word-tran" style="display: none;">
+                                                                    <div class="form-group" style="text-align: left;">
+                                                                        <label for="part_of_speech">Part of speach:</label>
+                                                                        <select id="part_of_speech" required class="form-control">
+                                                                            <option value="" selected disabled hidden>Select a part of speech</option>
+                                                                            <option value="noun">noun</option>
+                                                                            <option value="pronoun">pronoun</option>
+                                                                            <option value="adjective">adjective</option>
+                                                                            <option value="verb">verb</option>
+                                                                            <option value="adverb">adverb</option>
+                                                                            <option value="preposition">preposition</option>
+                                                                            <option value="conjunction">conjunction</option>
+                                                                            <option value="article">article</option>
+                                                                            <option value="exclamation">exclamation</option>
+                                                                            <option value="prefix">prefix</option>
+                                                                            <option value="abbreviation">abbreviation</option>
+                                                                        </select>
+                                                                        <label for="word-ipa">IPA:</label>
+                                                                        <input type="text" class="form-control" id="word-ipa" placeholder="IPA">
+                                                                        <label for="word-meaning">Meaning:</label>
+                                                                        <textarea class="form-control" id="word-meaning"  placeholder="Meanings in {{course.speaking_language}}" 
+                                                                            style="margin: 0px; width: 100%; height: 91px;"></textarea>
+                                                                        <small >Add a comma between different meanings.</small>
+                                                                        <br>
+                                                                        <label for="word-def">Definition:</label>
+                                                                        <input type="text" class="form-control" id="word-def" placeholder="Definition">
+                                                                        <label for="word-node">Node:</label>
+                                                                        <input type="text" class="form-control" id="word-node" placeholder="Add a node if you want">
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="submit" id="save-word-tran-btn" class="btn btn-outline-secondary">Save</button>
+                                                                </td>
+                                                        `
+                        }
+
+
+                        if (wordResults.length > 0) {
+                            wordResults.map(w => {
+                                if (w.learning) {
+                                    wordResultsTbody.innerHTML += `
+                                                                        <tr>
+                                                                            <td>${w.word}</td>
+                                                                            <td><button class="btn btn-outline-success" disabled>Added</button></td>
+                                                                        </tr>
+                                                                    `
+                                }
+                                else {
+                                    wordResultsTbody.innerHTML += `
+                                                                        <tr>
+                                                                            <td>${w.word}</td>
+                                                                            <td><button class="add-word-btn btn btn-outline-secondary" name="${w.word}" id="${w.id}" title="Add to my lesson">Add</button></td>
+                                                                        </tr>
+                                                                    `
+                                }
+                            })
+                        }
+
+                        if (!specificWord) {
+                            var unknowWordTran = document.getElementById("unknow-word-tran")
+                            var newWordPartOfSpeech = document.getElementById("part_of_speech")
+                            var newWordIPA = document.getElementById("word-ipa")
+                            var newWordMeaning = document.getElementById("word-meaning")
+                            var newWordDefinition = document.getElementById("word-def")
+                            var newWordNode = document.getElementById("word-node")
+                            var saveWordTranBtn = document.getElementById("save-word-tran-btn")
+
+                            const addWordTranBtns = document.querySelectorAll('.add-word-tran-btn');
+                            saveWordTranBtn.style.visibility = 'hidden'
+                            addWordTranBtns.forEach(addWordTranBtn => addWordTranBtn.addEventListener('click', event => {
+                                if (unknowWordTran.style.display == 'block') {
+                                    unknowWordTran.style.display = 'none'
+                                    saveWordTranBtn.style.visibility = 'hidden'
+
+                                }
+                                else {
+                                    unknowWordTran.style.display = 'block'
+                                    saveWordTranBtn.style.visibility = 'visible'
+
+                                    saveWordTranBtn.addEventListener('click', event => {
+                                        if (document.getElementById("part_of_speech").selectedIndex == 0)
+                                            return alert("Need to select a part of speech")
+
+                                        addUnknowWordURL = `/courses/${course_id}/lessons/${lesson_id}/unknow_word/add/`
+                                        fetch(addUnknowWordURL, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRFToken': csrftoken,
+                                            },
+                                            body: JSON.stringify({
+                                                'unknow_word': unknowWord,
+                                                'part_of_speech': newWordPartOfSpeech.value,
+                                                'ipa': newWordIPA.value,
+                                                'meaning': newWordMeaning.value,
+                                                'definition': newWordDefinition.value,
+                                                'node': newWordNode.value,
+                                            }),
+
+                                        }).then(response => response.json())
+                                            .then(data => {
+                                                console.log(data);
+                                                if (unknowWordTran.style.display == 'block')
+                                                    unknowWordTran.style.display = 'none'
+                                                wordResultsTbody.style.display = 'none'
+                                                saveWordTranBtn.style.display = 'none'
+                                                wordQ.focus()
+
+                                            })
+                                            .catch((error) => {
+                                                console.log(error);
+                                            });
+                                    })
+                                }
+                            }))
+                        }
+
+                        const addWordBtns = document.querySelectorAll('.add-word-btn');
+                        addWordBtns.forEach(addWordBtn => addWordBtn.addEventListener('click', event => {
+                            addWordBtn.disabled = true
+                            addWordBtn.innerText = "Added"
+                            addWordBtn.classList.add('btn-outline-success');
+                            addWordBtn.classList.remove('btn-outline-secondary');
+
+                            addWordURL = `/courses/${course_id}/lessons/${lesson_id}/add_word/${addWordBtn.id}/`
+                            fetch(addWordURL, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrftoken,
+                                },
+                            })
+                                .then(response => response.json())
+                                .then(response => {
+                                    var wrd_trans = response.data
+                                    if (wrd_trans.length > 1) {
+                                        for (i in wrd_trans) {
+                                            GenerateWordsTBody(wrd_trans[i])
+                                        }
+                                    }
+
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
+                        }));
+
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+    })
+
+    searchPhraseBtn.addEventListener('click', () => {
+        if (!isLetter(phraseQ.value.replace(' ', ''))) {
+            alert("Your phrase can not contain special characters or numbers.")
+            phraseQ.focus()
+        }
+        else {
+            phraseResults.style.display = 'block'
+            phraseQ.focus()
+            if (phraseQ.value.length > 0) {
+                searchPhraseURL = `/courses/${course_id}/lessons/${lesson_id}/search_phrase/${phraseQ.value}/`
+                fetch(searchPhraseURL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                })
+                    .then(response => response.json())
+                    .then(response => {
+                        phraseResultsTbody.innerHTML = ''
+                        const phraseResults = response.data
+                        const specificPhrase = response.specific_phrase
+                        var unknowPhrase = phraseQ.value
+
+                        if (!specificPhrase && phraseQ.value.trim().indexOf(' ') >= 0) {
+                            phraseResultsTbody.innerHTML = `
+                                                                <tr>
+                                                                    <td>This course doesn't have any phrase like '${unknowPhrase}'. 
+                                                                        Still add to my lesson and i'll give it a translation.</td>
+                                                                    <td><button class="add-phrase-tran-btn btn btn-outline-secondary" id="${unknowPhrase}">Add translation</button></td>
+                                                                </tr>
+                                                            `
+                        }
+                        phraseResultsTbody.innerHTML += `
+                                                            <tr>
+                                                                <td id="unknow-phrase-tran" style="display: none;">
+                                                                    <div class="form-group" style="text-align: left;">
+                                                                        <label for="phrase-ipa">IPA:</label>
+                                                                        <input type="text" class="form-control" id="phrase-ipa" placeholder="IPA">
+                                                                        <label for="phrase-meaning">Meaning:</label>
+                                                                        <textarea class="form-control" id="phrase-meaning"  placeholder="Meanings in {{course.speaking_language}}"
+                                                                            style="margin: 0px; width: 100%; height: 91px;"></textarea>
+                                                                        <small >Add a comma between different meanings.</small>
+                                                                        <br>
+                                                                        <label for="phrase-def">Definition:</label>
+                                                                        <input type="text" class="form-control" id="phrase-def" placeholder="Definition">
+                                                                        <label for="phrase-node">Node:</label>
+                                                                        <input type="text" class="form-control" id="phrase-node" placeholder="Add a node if you want">
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="submit" id="save-phrase-tran-btn" class="btn btn-outline-secondary">Save</button>
+                                                                </td>
+                                                            </tr>
+                                                        `
+                        if (phraseResults.length > 0) {
+                            phraseResults.map(phr => {
+                                if (phr.learning) {
+                                    phraseResultsTbody.innerHTML += `
+                                                                        <tr>
+                                                                            <td>${phr.phrase}</td>
+                                                                            <td><button class="btn btn-outline-success" disabled>Added</button></td>
+                                                                        </tr>
+                                                                    `
+                                }
+                                else {
+                                    phraseResultsTbody.innerHTML += `
+                                                                        <tr>
+                                                                            <td>${phr.phrase}</td>
+                                                                            <td><button class="add-phrase-btn btn btn-outline-secondary" id="${phr.id}" title="Add to my lesson">Add</button></td>
+                                                                        </tr>
+                                                                    `
+                                }
+                            })
+                        }
+
+                        if (!specificPhrase) {
+                            var unknowPhraseTran = document.getElementById("unknow-phrase-tran")
+                            var newPhraseIPA = document.getElementById("phrase-ipa")
+                            var newPhraseMeaning = document.getElementById("phrase-meaning")
+                            var newPhraseDefinition = document.getElementById("phrase-def")
+                            var newPhraseNode = document.getElementById("phrase-node")
+                            var savePhraseTranBtn = document.getElementById("save-phrase-tran-btn")
+
+                            const addPhraseTranBtns = document.querySelectorAll('.add-phrase-tran-btn');
+                            savePhraseTranBtn.style.visibility = 'hidden'
+                            addPhraseTranBtns.forEach(addPhraseTranBtn => addPhraseTranBtn.addEventListener('click', event => {
+                                if (unknowPhraseTran.style.display == 'block') {
+                                    unknowPhraseTran.style.display = 'none'
+                                    savePhraseTranBtn.style.visibility = 'hidden'
+
+                                }
+                                else {
+                                    unknowPhraseTran.style.display = 'block';
+                                    savePhraseTranBtn.style.visibility = 'visible'
+
+                                    savePhraseTranBtn.addEventListener('click', e => {
+                                        addUnknowPhraseURL = `/courses/${course_id}/lessons/${lesson_id}/unknow_phrase/add/`
+                                        fetch(addUnknowPhraseURL, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRFToken': csrftoken,
+                                            },
+                                            body: JSON.stringify({
+                                                'unknow_phrase': unknowPhrase,
+                                                'ipa': newPhraseIPA.value,
+                                                'meaning': newPhraseMeaning.value,
+                                                'definition': newPhraseDefinition.value,
+                                                'node': newPhraseNode.value,
+                                            }),
+
+                                        }).then(response => response.json())
+                                            .then(data => {
+                                                console.log(data);
+                                                if (unknowPhraseTran.style.display == 'block')
+                                                    unknowPhraseTran.style.display = 'none'
+                                                phraseResultsTbody.style.display = 'none'
+                                                savePhraseTranBtn.style.display = 'none'
+                                                phraseQ.focus()
+                                            })
+                                            .catch((error) => {
+                                                console.log(error);
+                                            });
+                                    })
+                                }
+                            }))
+                        }
+
+                        const addPhraseBtns = document.querySelectorAll('.add-phrase-btn');
+                        addPhraseBtns.forEach(addPhraseBtn => addPhraseBtn.addEventListener('click', event => {
+                            addPhraseBtn.disabled = true
+                            addPhraseBtn.innerText = "Added"
+                            addPhraseBtn.classList.add('btn-outline-success');
+                            addPhraseBtn.classList.remove('btn-outline-secondary');
+
+                            addPhraseURL = `/courses/${course_id}/lessons/${lesson_id}/add_phrase/${addPhraseBtn.id}/`
+                            fetch(addPhraseURL, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrftoken,
+                                },
+                            })
+                                .then(response => response.json())
+                                .then(response => {
+                                    phraseArray = response.data[0]
+                                    GeneratePhrasesTBody(phraseArray)
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
+                        }));
+
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+    })
+
+    searchExampleBtn.addEventListener('click', () => {
+        if (!isAlphaNumeric(exampleQ.value.replace(' ', ''))) {
+            alert("Your example can not contain special characters.")
+            exampleQ.focus()
+        }
+        else {
+            exampleResults.style.display = 'block'
+            exampleQ.focus()
+            if (exampleQ.value.length > 0) {
+                searchExampleURL = `/courses/${course_id}/lessons/${lesson_id}/search_example/${exampleQ.value}/`
+                fetch(searchExampleURL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                })
+                    .then(response => response.json())
+                    .then(response => {
+                        exampleResultsTbody.innerHTML = ''
+                        const exampleResults = response.data
+
+                        var unknowExample = exampleQ.value
+                        //  && exampleQ.value.trim().split(" ").length - 1 
+                        if (exampleQ.value.trim().indexOf(' ') >= 0) {
+                            exampleResultsTbody.innerHTML = `
+                                                            <tr>
+                                                                <td>Add your own example: '${unknowExample}'</td>
+                                                                <td><button class="add-unknow-example-btn btn btn-outline-secondary" id="${unknowExample}">Add new example</button></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td id="unknow-example" style="display: none;">
+                                                                    <div class="form-group" style="text-align: left;">
+                                                                        <label for="example-translation">Translation:</label>
+                                                                        <textarea class="form-control" id="example-translation"  placeholder="{{course.speaking_language}} translation"
+                                                                            style="margin: 0px; width: 100%; height: 91px;"></textarea>
+                                                                        <small >Add a comma between different translations.</small>
+                                                                        <br>
+                                                                        <label for="example-node">Node:</label>
+                                                                        <input type="text" class="form-control" id="example-node" placeholder="Add a node if you want">
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="submit" id="save-unknow-example-btn" class="btn btn-outline-secondary">Save</button>
+                                                                </td>
+                                                            </tr>
+                                                            `
+                        }
+
+                        if (exampleResults.length > 0) {
+                            exampleResults.map(exp => {
+                                if (exp.learning) {
+                                    exampleResultsTbody.innerHTML += `
+                                                                        <tr>
+                                                                            <td>${exp.example}</td>
+                                                                            <td><button class="btn btn-outline-success" disabled>Added</button></td>
+                                                                        </tr>
+                                                                    `
+                                }
+                                else {
+                                    exampleResultsTbody.innerHTML += `
+                                                                        <tr>
+                                                                            <td>${exp.example}</td>
+                                                                            <td><button class="add-example-btn btn btn-outline-secondary" id="${exp.id}" title="Add to my lesson">Add</button></td>
+                                                                        </tr>
+                                                                    `
+                                }
+                            })
+                        }
+
+                        var unknowExample = document.getElementById("unknow-example")
+                        var newExampleTranslation = document.getElementById("example-translation")
+                        var newExampleNode = document.getElementById("example-node")
+                        var saveUnknowExampleBtn = document.getElementById("save-unknow-example-btn")
+
+                        const addUnknowExampleBtns = document.querySelectorAll('.add-unknow-example-btn');
+                        saveUnknowExampleBtn.style.visibility = 'hidden'
+                        addUnknowExampleBtns.forEach(addUnknowExampleBtn => addUnknowExampleBtn.addEventListener('click', event => {
+                            if (unknowExample.style.display == 'block') {
+                                unknowExample.style.display = 'none'
+                                saveUnknowExampleBtn.style.visibility = 'hidden'
+
+                            }
+                            else {
+                                unknowExample.style.display = 'block';
+                                saveUnknowExampleBtn.style.visibility = 'visible'
+
+                                saveUnknowExampleBtn.addEventListener('click', e => {
+                                    addUnknowExampleURL = `/courses/${course_id}/lessons/${lesson_id}/unknow_example/add/`
+                                    fetch(addUnknowExampleURL, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': csrftoken,
+                                        },
+                                        body: JSON.stringify({
+                                            'unknow_example': unknowExample,
+                                            'translation': newExampleTranslation.value,
+                                            'node': newExampleNode.value,
+                                        }),
+
+                                    }).then(response => response.json())
+                                        .then(data => {
+                                            console.log(data);
+                                            if (unknowExample.style.display == 'block')
+                                                unknowExample.style.display = 'none'
+                                            exampleResultsTbody.style.display = 'none'
+                                            saveUnknowExampleBtn.style.display = 'none'
+                                            exampleQ.focus()
+                                        })
+                                        .catch((error) => {
+                                            console.log(error);
+                                        });
+                                })
+                            }
+                        }))
+
+
+                        const addExampleBtns = document.querySelectorAll('.add-example-btn');
+                        addExampleBtns.forEach(addExampleBtn => addExampleBtn.addEventListener('click', event => {
+                            addExampleBtn.disabled = true
+                            addExampleBtn.innerText = "Added"
+                            addExampleBtn.classList.add('btn-outline-success');
+                            addExampleBtn.classList.remove('btn-outline-secondary');
+
+                            addExampleURL = `/courses/${course_id}/lessons/${lesson_id}/add_example/${addExampleBtn.id}/`
+                            fetch(addExampleURL, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrftoken,
+                                },
+                            })
+                                .then(response => response.json())
+                                .then(response => {
+                                    exampleArray = response.data[0]
+                                    GenerateExamplesTBody(exampleArray)
+                                })
+                                .catch((error) => {
+                                    console.error('Error:', error);
+                                });
+                        }));
+
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
+
+        }
+    })
+
+</script>
+
+{% endblock %}

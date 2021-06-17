@@ -1,0 +1,43 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+
+<div>
+    <h5>{{learning_language}} words learned <span>{{words.count}}</span></h5>
+
+</div>
+<form class="d-flex">
+    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-success" type="submit">Search</button>
+</form>
+<br>
+<div>
+    <table class="table table-hover">
+        <tr>
+            <th>Word</th>
+            <th>Last practiced</th>
+            <th>Listening</th>
+            <th>Speaking</th>
+            <th>Reading</th>
+            <th>Writing</th>
+        </tr>
+        {% for word in words %}
+        <tr>
+            <td>
+                <a href="{% url 'word-detail' learning_course.course.id word.word.id %}">{{ word.word }}</a>
+            </td>
+            <td>{{ word.last_practiced|timesince }} ago</td>
+            <td>{{ word.listening }}</td>
+            <td>{{ word.speaking }}</td>
+            <td>{{ word.reading }}</td>
+            <td>{{ word.writing }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</div>
+
+
+
+{% endblock %}

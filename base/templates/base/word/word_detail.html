@@ -1,0 +1,81 @@
+{% extends 'base/main.html' %}
+{% load static %}
+{% block content %}
+
+
+<br>
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>{{course}}</h5>
+            <h5>Speaker {{word}}</h5>
+            <span>Translations of {{word}}</span>
+            <a href="{% url 'word-translation-add' course.id word.id %}">Add translation?</a>
+            <form class="d-flex">
+                <input class="form-control me-2" type="search" placeholder="Search the author" aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Part of speech</th>
+                        <th>IPA</th>
+                        <th>Meaning in {{course.speaking_language}}</th>
+                        <th>Definition</th>
+                        <th>Author</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="word-results-tbody">
+                    {% for translation in translations %}
+                    <tr>
+                        <td>
+                            <div>{{translation.part_of_speech}}</div>
+                        </td>
+                        <td>
+                            <div>{{translation.ipa}}</div>
+                        </td>
+                        <td>
+                            <div>{{translation.meaning}}</div>
+                        </td>
+                        <td>
+                            <div>{{translation.definition}}</div>
+                        </td>
+                        <td>
+                            <div>{{translation.user}}</div>
+                        </td>
+                        {% if request.user == translation.user %}
+                        <td>
+                            <a href="{% url 'word-translation-edit' course.id word.id translation.id %}">Edit</a>
+                        </td>
+                        <td>
+                            <a href="{% url 'word-translation-remove' course.id word.id translation.id %}">Remove</a>
+                        </td>
+                        {% else %}
+                        <td></td>
+                        <td></td>
+                        {% endif %}
+                        <td></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+{% endblock %}

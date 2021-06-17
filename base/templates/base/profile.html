@@ -1,0 +1,54 @@
+{% extends 'base/main.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block content %}
+{% if user %}
+<h1>{{user.username}}</h1>
+<img id="image-bubble" style="height: 320px; width: 320px;" class="rounded-circle" src="{{ user.profile.imageURL }}"
+    alt="">
+
+{% if request.user == user %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form|crispy}}
+    <!-- <input accept="image/*" class="jMzvB" name="image" type="file"> -->
+
+    <img src="//d35aaqx5ub95lt.cloudfront.net/images/icons/pen-circle.svg">
+    <input class="button" type="submit" value="Update">
+
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+</form>
+{% endif %}
+<h3>Courses learning</h3>
+{% for course in learning_courses %}
+<a href="{% url 'course-detail' course.id %}"> {{course}} </a>
+<hr>
+{% empty %}
+<p>There is no course in here.</p>
+{% endfor %}
+{% else %}
+<div style="text-align: center;">
+    <h2>Sorry, this profile isn't available.</h2>
+    <div>The link you followed may be broken, or the profile may have been removed. <a href="/">Go back to DuoDuo.</a>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    var imageBubble = document.getElementById("image-bubble")
+    var image = document.getElementById("id_image")
+    image.addEventListener('change', () => {
+        const img_data = image.files[0]
+        const url = URL.createObjectURL(img_data)
+        imageBubble.src = url
+    })
+</script>
+{% endblock %}
